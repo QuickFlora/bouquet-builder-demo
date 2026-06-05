@@ -82,7 +82,34 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#9CC2EA;box-sh
     <section class="screen" id="s-production"><div class="wrap"><h1>Production</h1><p class="sub">Work orders on the assembly floor.</p><div class="card" style="padding:18px;color:var(--muted)">Scan-and-build per recipe.</div></div></section>
     <section class="screen" id="s-pack"><div class="wrap"><h1>Pack &amp; ship</h1><p class="sub">Barcode finished units, pack cartons.</p><div class="card" style="padding:18px;color:var(--muted)">Per-unit + carton barcoding.</div></div></section>
     <section class="screen" id="s-deliveries"><div class="wrap"><h1>Deliveries</h1><p class="sub">Truck, air cargo, or pickup.</p><div class="card" style="padding:18px;color:var(--muted)">Scheduled by delivery manager.</div></div></section>
-    <section class="screen" id="s-inventory"><div class="wrap"><h1>Inventory</h1><p class="sub">Live stock by lot with expiration (FEFO).</p><div class="card" style="padding:18px;color:var(--muted)">Lot-level expiry tracking.</div></div></section>
+    <section class="screen" id="s-inventory"><div class="wrap">
+      <h1>Inventory status</h1><p class="sub">Live availability by item and location — replicated from the POS page (InventoryByWarehouse).</p>
+      <div class="card" style="padding:14px 16px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px">
+          <div><label>Delivery date</label><input type="date" id="invDate" value="2026-06-12"></div>
+          <div><label>Location / Farm</label><select id="invLoc"><option>All locations</option><option selected>Berkeley Florist Supply</option></select></div>
+          <div><label>Item search</label><input id="invSearch" placeholder="Item ID or name"></div>
+        </div>
+        <label>Select availability</label>
+        <div class="tabs" id="invAvail" style="margin-top:4px;margin-bottom:0">
+          <span class="tab on" data-f="all">Show all</span>
+          <span class="tab" data-f="back">Only back order</span>
+          <span class="tab" data-f="over">Only over sold</span>
+          <span class="tab" data-f="hand">Only on hand</span>
+          <span class="tab" data-f="avail">Only available for sale</span>
+        </div>
+      </div>
+      <div class="card" style="padding:4px 14px 8px;overflow-x:auto">
+        <table style="min-width:940px"><thead><tr>
+          <th>Item ID</th><th>Item name</th><th>Location ID</th>
+          <th style="text-align:right">Qty ordered</th><th style="text-align:right">On hand</th>
+          <th style="text-align:right">Assigned</th><th style="text-align:right">To receive</th>
+          <th style="text-align:right">Over sold</th><th style="text-align:right">Back order</th>
+          <th style="text-align:right">Avail for sale</th></tr></thead>
+          <tbody id="invRows"></tbody></table>
+        <div id="invPager" style="display:flex;gap:6px;align-items:center;padding:10px 6px;color:var(--muted);font-size:13px"></div>
+      </div>
+    </div></section>
     <section class="screen" id="s-settings"><div class="wrap"><h1>Settings</h1><p class="sub">Demo settings placeholder.</p><div class="card" style="padding:18px;color:var(--muted)">Locations, work centers, labor rates.</div></div></section>
     <div style="padding:14px 26px;color:var(--faint);font-size:12px;">Bouquet Builder — interactive POC for QuickFlora · recipe worksheet &amp; BOM based on the current POS pages</div>
   </main>
@@ -241,7 +268,25 @@ document.querySelectorAll('#viewTabs .tab').forEach(t=>t.onclick=()=>{
 [["BQ-4471","Caribbean Dream",500,"Jun 18","To buy","p-warn"],["BQ-4468","Dozen Rose Compote",240,"Jun 16","Building","p-info"],["BQ-4465","Vulcano",120,"Jun 15","Building","p-info"],["BQ-4460","Sunrise",300,"Jun 14","Ready","p-ok"],["BQ-4452","Zen Box Garden",80,"Jun 13","Delivered","p-mut"]].forEach(o=>{const tr=document.createElement('tr');tr.innerHTML=`<td style="font-weight:500">${o[0]}</td><td>${o[1]}</td><td style="text-align:right">${o[2]}</td><td>${o[3]}</td><td><span class="pill ${o[5]}">${o[4]}</span></td>`;document.getElementById('orderRows').appendChild(tr);});
 document.getElementById('mB').textContent=count("Bouquet");document.getElementById('mT').textContent=count("Table Arrangement");
 
-const titles={dashboard:"Dashboard",orders:"Orders",buy:"Buy lists",receiving:"Receiving",production:"Production",pack:"Pack & ship",deliveries:"Deliveries",catalog:"Catalog & recipes",inventory:"Inventory",settings:"Settings",recipe:"Recipe"};
+// ----- inventory status (InventoryByWarehouse) -----
+const INVENTORY=[["FLW4", "", "Berkeley Florist Supply", 0, 0, 0, 0, 0, 0, 0], ["NTS-4031-WHITE", "", "Berkeley Florist Supply", 0, 0, 0, 0, 0, 0, 0], ["NTS-4082-WHITE", "BASKET FABRIC 8.5'", "Berkeley Florist Supply", 0, 3, 0, 0, 0, 0, 3], ["WD-CSB5510", "CERAMIC 5 x 5\" Open 10\"H", "Berkeley Florist Supply", 0, 31, 0, 0, 0, 0, 31], ["WD-WHT1204", "CERAMIC BOWL 10.5'Open-12'w/4.75'H", "Berkeley Florist Supply", 0, 0, 0, 0, 0, 0, 0], ["SS-686-07", "CROSS 24\"", "Berkeley Florist Supply", 0, 8, 0, 0, 0, 0, 8], ["SMO-83-03730", "Crowning Glory.1Gal (Hydration Spray)", "Berkeley Florist Supply", 0, 34, 0, 0, 0, 0, 34], ["SMO-82-03170", "Crystal 300 (1Gal)", "Berkeley Florist Supply", 0, 46, 0, 0, 0, 0, 46], ["VAC-112S", "CUP SMALL 6' x 3.5' Open", "Berkeley Florist Supply", 0, 74, 0, 0, 0, 0, 74], ["SS-81-175", "DSGNR URN BRSS 9 1/2'", "Berkeley Florist Supply", 0, 79, 0, 0, 0, 0, 79], ["GI-10081P", "FER/BMB POT BASKET 8'", "Berkeley Florist Supply", 12, 69, 0, 0, 12, 12, 57], ["SS-504-07", "FLORIST WIRE 21GAUGE. 18\"", "Berkeley Florist Supply", 0, 24, 0, 0, 0, 0, 24], ["SMO-82-03002", "Flower Food 300. (200/box) Powder Sachets", "Berkeley Florist Supply", 0, 69, 0, 0, 0, 0, 69], ["FITZ-FT2210", "FLOWER TAPE 1/2\" (Sld by box )", "Berkeley Florist Supply", 0, 0, 0, 0, 0, 0, 0], ["SMO-11-01025", "Iglu Grande Holder 6/box", "Berkeley Florist Supply", 0, 20, 0, 0, 0, 0, 20], ["SMO-J0060", "INSTANT FLORAL FOAM By (Box 48pcs)", "Berkeley Florist Supply", 2, 25, 0, 0, 2, 2, 23], ["LMY-1361", "LARGE PEDESTAL FOAM x12Pc", "Berkeley Florist Supply", 0, 5, 0, 0, 0, 0, 5], ["SMO-J1842", "MACHE WREATH 12\"", "Berkeley Florist Supply", 0, 12, 0, 0, 0, 0, 12], ["DML-57BK", "MING DISH 7\" BLK", "Berkeley Florist Supply", 0, 32, 0, 0, 0, 0, 32], ["SS-692-07", "OPEN HEART 18\"", "Berkeley Florist Supply", 0, 16, 0, 0, 0, 0, 16], ["WD-WD9", "PLASTIC TRAY 9\"", "Berkeley Florist Supply", 0, 827, 0, 0, 0, 0, 827], ["SS-73-07", "SNGL DESING BOWL 6'", "Berkeley Florist Supply", 0, 720, 0, 0, 0, 0, 720], ["WD-WD6", "TRAY PLASTIC 6' ROUND x 1.5'H", "Berkeley Florist Supply", 0, 30, 0, 0, 0, 0, 30], ["JC-981409-01C", "UNWIRED DBL FACE SATIN 1.5''x 50Y (WHITE)", "Berkeley Florist Supply", 0, 156, 0, 0, 0, 0, 156], ["JC-981409-18C", "UNWIRED DBL FACED SATIN 1.5' x 50Y. (IVORY)", "Berkeley Florist Supply", 0, 155, 0, 0, 0, 0, 155]];
+let invFilter='all',invPage=1;const invPer=12;
+function invMatch(r){const s=(document.getElementById('invSearch').value||'').toLowerCase();
+  if(s&&!(r[0].toLowerCase().includes(s)||(r[1]||'').toLowerCase().includes(s)))return false;
+  if(invFilter==='back')return r[8]>0; if(invFilter==='over')return r[7]>0;
+  if(invFilter==='hand')return r[4]>0; if(invFilter==='avail')return r[9]>0; return true;}
+function renderInv(){
+  const all=INVENTORY.filter(invMatch); const pages=Math.max(1,Math.ceil(all.length/invPer));
+  if(invPage>pages)invPage=1; const rows=all.slice((invPage-1)*invPer,invPage*invPer);
+  const num=(v,warn)=>`<td style="text-align:right${warn&&v>0?';color:var(--warn);font-weight:600':''}">${v}</td>`;
+  document.getElementById('invRows').innerHTML=rows.map(r=>`<tr><td style="font-weight:500">${r[0]}</td><td>${r[1]||'<span style="color:var(--faint)">—</span>'}</td><td>${r[2]}</td>${num(r[3])}${num(r[4])}${num(r[5])}${num(r[6])}${num(r[7],true)}${num(r[8],true)}<td style="text-align:right;font-weight:600;color:${r[9]>0?'var(--ok)':'var(--faint)'}">${r[9]}</td></tr>`).join('')||'<tr><td colspan="10" style="color:var(--muted)">No items match.</td></tr>';
+  let pg='';for(let i=1;i<=pages;i++){pg+=`<span style="cursor:pointer;padding:3px 9px;border-radius:6px;${i===invPage?'background:var(--info-bg);color:var(--info)':''}" onclick="invPage=${i};renderInv()">${i}</span>`;}
+  document.getElementById('invPager').innerHTML=pg+`<span style="margin-left:auto">${all.length} items</span>`;}
+document.querySelectorAll('#invAvail .tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('#invAvail .tab').forEach(x=>x.classList.toggle('on',x===t));invFilter=t.dataset.f;invPage=1;renderInv();});
+document.getElementById('invSearch').addEventListener('input',()=>{invPage=1;renderInv();});
+renderInv();
+
+const titles={dashboard:"Dashboard",orders:"Orders",buy:"Buy lists",receiving:"Receiving",production:"Production",pack:"Pack & ship",deliveries:"Deliveries",catalog:"Catalog & recipes",inventory:"Inventory status",settings:"Settings",recipe:"Recipe"};
 function go(id,keepNav){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById('s-'+id).classList.add('on');if(!keepNav){document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.go===id));document.getElementById('crumb').innerHTML='<b>'+(titles[id]||'')+'</b>';}window.scrollTo(0,0);}
 document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
 renderTabs();renderGrid();
