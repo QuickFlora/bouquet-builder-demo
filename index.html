@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bouquet Builder — QuickFlora demo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+  :root{
+    --green:#2E5E3A; --green-bg:#E3EFE6;
+    --ink:#1f2421; --muted:#6b736d; --faint:#9aa39c;
+    --line:#e6e8e5; --bg:#f7f8f6; --card:#ffffff;
+    --info:#185FA5; --info-bg:#E6F1FB;
+    --warn:#854F0B; --warn-bg:#FAEEDA;
+    --ok:#3B6D11; --ok-bg:#EAF3DE;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;}
+  a{color:inherit;text-decoration:none;}
+  .app{display:flex;min-height:100vh;}
+  /* sidebar */
+  aside{width:210px;flex-shrink:0;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 10px;position:sticky;top:0;height:100vh;}
+  .brand{display:flex;align-items:center;gap:9px;padding:6px 10px 14px;}
+  .brand i{font-size:24px;color:var(--green);}
+  .brand b{font-weight:600;font-size:15px;}
+  .sec{font-size:11px;letter-spacing:.04em;color:var(--faint);text-transform:uppercase;padding:14px 12px 6px;}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;font-size:13.5px;color:var(--muted);cursor:pointer;}
+  .nav:hover{background:var(--bg);}
+  .nav.on{background:var(--green-bg);color:var(--green);font-weight:500;}
+  .nav i{font-size:19px;}
+  .grow{flex:1;}
+  /* main */
+  main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .top{display:flex;align-items:center;gap:10px;padding:11px 22px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;}
+  .crumb{font-size:12.5px;color:var(--faint);}
+  .crumb b{color:var(--ink);font-weight:500;}
+  .search{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:8px;padding:6px 11px;color:var(--faint);font-size:12.5px;}
+  .ava{width:30px;height:30px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+  .wrap{padding:22px 26px;max-width:1100px;}
+  h1{font-size:21px;font-weight:600;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 18px;}
+  .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 13px;font-size:13.5px;cursor:pointer;}
+  .btn:hover{background:var(--bg);}
+  .btn.pri{background:var(--green);color:#fff;border-color:var(--green);}
+  .btn.pri:hover{background:#27502f;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;}
+  .pill{font-size:11.5px;padding:3px 9px;border-radius:7px;white-space:nowrap;}
+  .p-warn{background:var(--warn-bg);color:var(--warn);}
+  .p-info{background:var(--info-bg);color:var(--info);}
+  .p-ok{background:var(--ok-bg);color:var(--ok);}
+  .p-mut{background:#eef0ed;color:var(--muted);}
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:11.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;text-align:left;font-weight:500;padding:0 10px 9px;}
+  td{padding:12px 10px;font-size:13.5px;border-top:1px solid var(--line);}
+  tr.click{cursor:pointer;}
+  tr.click:hover td{background:#fafbf9;}
+  .tabs{display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap;}
+  .tab{font-size:12.5px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);color:var(--muted);cursor:pointer;}
+  .tab.on{background:var(--info-bg);color:var(--info);border-color:transparent;}
+  /* pipeline */
+  .pipe{display:flex;gap:6px;margin:0 0 20px;flex-wrap:wrap;}
+  .step{flex:1;min-width:96px;text-align:center;padding:9px 4px;border-radius:8px;font-size:12px;border:1px solid var(--line);color:var(--faint);background:#fff;}
+  .step.done{background:var(--info-bg);color:var(--info);border-color:transparent;}
+  .step.now{background:var(--info-bg);color:var(--info);border:2px solid #9CC2EA;}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 18px;}
+  .metric{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .metric .l{font-size:12.5px;color:var(--muted);}
+  .metric .v{font-size:23px;font-weight:600;margin-top:2px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;}
+  figure{margin:0;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;}
+  figure img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#eee;}
+  figcap{display:block;padding:9px 11px;}
+  figcap b{font-weight:600;font-size:13.5px;}
+  figcap span{display:block;color:var(--muted);font-size:12px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .bar{height:8px;border-radius:5px;background:#eef0ed;overflow:hidden;}
+  .bar > i{display:block;height:100%;background:var(--green);}
+  .note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:9px 12px;font-size:12.5px;display:inline-flex;gap:7px;align-items:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><i class="ti ti-flower"></i><b>Bouquet Builder</b></div>
+    <div class="sec">Operations</div>
+    <div class="nav" data-go="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    <div class="nav on" data-go="orders"><i class="ti ti-clipboard-list"></i> Orders</div>
+    <div class="nav" data-go="buy"><i class="ti ti-shopping-cart"></i> Buy lists</div>
+    <div class="nav" data-go="receiving"><i class="ti ti-package-import"></i> Receiving</div>
+    <div class="nav" data-go="production"><i class="ti ti-tools"></i> Production</div>
+    <div class="nav" data-go="pack"><i class="ti ti-package"></i> Pack &amp; ship</div>
+    <div class="nav" data-go="deliveries"><i class="ti ti-truck-delivery"></i> Deliveries</div>
+    <div class="sec">Setup</div>
+    <div class="nav" data-go="catalog"><i class="ti ti-list-details"></i> Catalog &amp; recipes</div>
+    <div class="nav" data-go="inventory"><i class="ti ti-building-warehouse"></i> Inventory</div>
+    <div class="grow"></div>
+    <div class="nav" data-go="settings"><i class="ti ti-settings"></i> Settings</div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <span class="crumb">Bouquet Builder <i class="ti ti-chevron-right" style="font-size:12px;"></i> <b id="crumb">Orders</b></span>
+      <div class="grow"></div>
+      <div class="search"><i class="ti ti-search"></i> Search</div>
+      <div class="ava">AF</div>
+    </div>
+
+    <!-- ORDERS -->
+    <section class="screen on" id="s-orders">
+      <div class="wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div><h1>Orders</h1><p class="sub">Bouquet build orders across every stage.</p></div>
+          <button class="btn pri"><i class="ti ti-plus"></i> New order</button>
+        </div>
+        <div class="tabs">
+          <span class="tab on">All 12</span><span class="tab">To buy 3</span><span class="tab">Building 4</span><span class="tab">Ready 2</span><span class="tab">Delivered 3</span>
+        </div>
+        <div class="card" style="padding:8px 14px 4px;">
+          <table>
+            <thead><tr><th style="width:18%">Order</th><th style="width:30%">Bouquet</th><th style="width:10%;text-align:right">Qty</th><th style="width:16%">Due</th><th style="width:14%">Customer</th><th style="width:12%">Stage</th></tr></thead>
+            <tbody id="orderRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ORDER DETAIL -->
+    <section class="screen" id="s-detail">
+      <div class="wrap">
+        <div class="crumb" style="margin-bottom:8px;cursor:pointer;" data-go="orders"><i class="ti ti-arrow-left"></i> Back to orders</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div><h1>Order BQ-4471 — Royal Hearts</h1><p class="sub">Bloom &amp; Co · 500 bouquets · deliver by Jun 18</p></div>
+          <span class="pill p-warn">To buy</span>
+        </div>
+        <div class="pipe">
+          <div class="step done"><i class="ti ti-check"></i> Order</div>
+          <div class="step now">Buy list</div>
+          <div class="step">Receive</div>
+          <div class="step">Build</div>
+          <div class="step">Pack</div>
+          <div class="step">Deliver</div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="l">Quantity</div><div class="v">500</div></div>
+          <div class="metric"><div class="l">Deliver by</div><div class="v">Jun 18</div></div>
+          <div class="metric"><div class="l">Est. labor</div><div class="v">41 hrs</div></div>
+          <div class="metric"><div class="l">Build by</div><div class="v">Jun 16</div></div>
+        </div>
+        <div class="card" style="padding:16px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <b>Recipe — Royal Hearts</b><span style="color:var(--muted);font-size:12.5px;">per bouquet × 500</span>
+          </div>
+          <table>
+            <thead><tr><th style="width:42%">Component</th><th style="width:16%;text-align:right">Need</th><th style="width:18%;text-align:right">On hand</th><th style="width:24%;text-align:right">Status</th></tr></thead>
+            <tbody>
+              <tr><td>Red roses</td><td style="text-align:right">3,000</td><td style="text-align:right">3,200</td><td style="text-align:right"><span class="pill p-ok">In stock</span></td></tr>
+              <tr><td>Eucalyptus</td><td style="text-align:right">1,500</td><td style="text-align:right">400</td><td style="text-align:right"><span class="pill p-warn">Short 1,100</span></td></tr>
+              <tr><td>White lilies</td><td style="text-align:right">1,000</td><td style="text-align:right">0</td><td style="text-align:right"><span class="pill p-warn">Order all</span></td></tr>
+              <tr><td>Glass vase + sleeve</td><td style="text-align:right">500</td><td style="text-align:right">2,000</td><td style="text-align:right"><span class="pill p-ok">In stock</span></td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+            <button class="btn pri" data-go="buy"><i class="ti ti-shopping-cart-plus"></i> Generate buy list</button>
+            <button class="btn" data-go="production"><i class="ti ti-calendar-clock"></i> Schedule build</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BUY LISTS -->
+    <section class="screen" id="s-buy">
+      <div class="wrap">
+        <h1>Buy lists</h1><p class="sub">Draft purchase orders generated from short components, grouped by farm.</p>
+        <div class="card" style="padding:16px 18px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <b>Draft PO · Rosaprima (Ecuador)</b><span class="pill p-warn">Draft</span>
+          </div>
+          <table>
+            <thead><tr><th style="width:40%">Item</th><th style="width:14%;text-align:right">Qty</th><th style="width:18%;text-align:right">Unit</th><th style="width:14%">Arrive</th><th style="width:14%">For order</th></tr></thead>
+            <tbody>
+              <tr><td>White lilies</td><td style="text-align:right">1,000</td><td style="text-align:right">$0.82</td><td>Jun 15</td><td>BQ-4471</td></tr>
+              <tr><td>Eucalyptus</td><td style="text-align:right">1,100</td><td style="text-align:right">$0.31</td><td>Jun 15</td><td>BQ-4471</td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex;gap:10px;margin-top:16px;"><button class="btn pri"><i class="ti ti-send"></i> Issue PO</button><button class="btn"><i class="ti ti-edit"></i> Edit</button></div>
+        </div>
+        <span class="note"><i class="ti ti-info-circle"></i> Arrival dates are set to land 1 day before the Jun 16 build date.</span>
+      </div>
+    </section>
+
+    <!-- RECEIVING -->
+    <section class="screen" id="s-receiving">
+      <div class="wrap">
+        <h1>Receiving</h1><p class="sub">Scan incoming POs; capture lot and expiration on arrival.</p>
+        <div class="card" style="padding:16px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><b>PO-8841 · Rosaprima</b><span class="pill p-info">Arriving Jun 15</span></div>
+          <table>
+            <thead><tr><th style="width:36%">Item</th><th style="width:14%;text-align:right">Ordered</th><th style="width:14%;text-align:right">Received</th><th style="width:18%">Lot</th><th style="width:18%">Expires</th></tr></thead>
+            <tbody>
+              <tr><td>White lilies</td><td style="text-align:right">1,000</td><td style="text-align:right">—</td><td>—</td><td>—</td></tr>
+              <tr><td>Eucalyptus</td><td style="text-align:right">1,100</td><td style="text-align:right">—</td><td>—</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:16px;"><button class="btn pri"><i class="ti ti-scan"></i> Scan to receive</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTION -->
+    <section class="screen" id="s-production">
+      <div class="wrap">
+        <h1>Production</h1><p class="sub">Work orders on the assembly floor, scanned and built per recipe.</p>
+        <div class="metrics">
+          <div class="metric"><div class="l">Open work orders</div><div class="v">4</div></div>
+          <div class="metric"><div class="l">Bouquets today</div><div class="v">360</div></div>
+          <div class="metric"><div class="l">Labor scheduled</div><div class="v">62 hrs</div></div>
+        </div>
+        <div class="card" style="padding:16px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><b>WO-2231 · Salsa Fiesta · 120 units</b><span class="pill p-info">Building</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:6px;"><span>78 of 120 built</span><span>65%</span></div>
+          <div class="bar"><i style="width:65%"></i></div>
+          <div style="display:flex;gap:10px;margin-top:16px;"><button class="btn pri"><i class="ti ti-scan"></i> Scan station</button><button class="btn"><i class="ti ti-list-check"></i> Pick list</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PACK -->
+    <section class="screen" id="s-pack">
+      <div class="wrap">
+        <h1>Pack &amp; ship</h1><p class="sub">Barcode each finished bouquet, pack into cartons, hand to delivery.</p>
+        <div class="card" style="padding:16px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><b>Order BQ-4460 · Shades of Green Rose · 300</b><span class="pill p-ok">Ready to pack</span></div>
+          <table>
+            <thead><tr><th style="width:40%">Carton</th><th style="width:20%;text-align:right">Units</th><th style="width:20%">Mode</th><th style="width:20%">Status</th></tr></thead>
+            <tbody>
+              <tr><td>CTN-0001</td><td style="text-align:right">48</td><td>Truck</td><td><span class="pill p-ok">Packed</span></td></tr>
+              <tr><td>CTN-0002</td><td style="text-align:right">48</td><td>Truck</td><td><span class="pill p-info">Packing</span></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:16px;"><button class="btn pri"><i class="ti ti-barcode"></i> Barcode &amp; pack</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DELIVERIES -->
+    <section class="screen" id="s-deliveries">
+      <div class="wrap">
+        <h1>Deliveries</h1><p class="sub">Scheduled by the delivery manager — truck, air cargo, or pickup.</p>
+        <div class="card" style="padding:8px 14px 4px;">
+          <table>
+            <thead><tr><th style="width:18%">Order</th><th style="width:26%">Destination</th><th style="width:18%">Mode</th><th style="width:18%">ETA</th><th style="width:20%">Status</th></tr></thead>
+            <tbody>
+              <tr><td>BQ-4460</td><td>Whole Foods · Denver</td><td>Truck</td><td>Jun 14</td><td><span class="pill p-info">In transit</span></td></tr>
+              <tr><td>BQ-4452</td><td>Kroger · Dallas</td><td>Air cargo</td><td>Jun 13</td><td><span class="pill p-ok">Delivered</span></td></tr>
+              <tr><td>BQ-4448</td><td>Local studio · Miami</td><td>Pickup</td><td>Jun 12</td><td><span class="pill p-ok">Delivered</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATALOG -->
+    <section class="screen" id="s-catalog">
+      <div class="wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div><h1>Catalog &amp; recipes</h1><p class="sub">Bouquet SKUs and their recipes. Click a bouquet to edit its recipe.</p></div>
+          <button class="btn pri"><i class="ti ti-plus"></i> New bouquet</button>
+        </div>
+        <div class="grid" id="catalogGrid"></div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="screen" id="s-dashboard">
+      <div class="wrap">
+        <h1>Dashboard</h1><p class="sub">Today across the bouquet floor.</p>
+        <div class="metrics">
+          <div class="metric"><div class="l">Open orders</div><div class="v">12</div></div>
+          <div class="metric"><div class="l">To buy</div><div class="v">3</div></div>
+          <div class="metric"><div class="l">Building</div><div class="v">4</div></div>
+          <div class="metric"><div class="l">Out for delivery</div><div class="v">2</div></div>
+        </div>
+        <div class="card" style="padding:16px 18px;">
+          <b>Needs attention</b>
+          <table style="margin-top:8px;">
+            <tbody>
+              <tr><td><i class="ti ti-alert-triangle" style="color:var(--warn)"></i> BQ-4471 Royal Hearts</td><td style="color:var(--muted)">2 components short — buy list not issued</td><td style="text-align:right"><span class="pill p-warn">Action</span></td></tr>
+              <tr><td><i class="ti ti-clock" style="color:var(--info)"></i> WO-2231 Salsa Fiesta</td><td style="color:var(--muted)">Build due tomorrow — 65% done</td><td style="text-align:right"><span class="pill p-info">On track</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- INVENTORY -->
+    <section class="screen" id="s-inventory">
+      <div class="wrap">
+        <h1>Inventory</h1><p class="sub">Live stock by lot with expiration — FEFO ordering.</p>
+        <div class="card" style="padding:8px 14px 4px;">
+          <table>
+            <thead><tr><th style="width:30%">Item</th><th style="width:18%;text-align:right">On hand</th><th style="width:18%">Received</th><th style="width:18%">Expires</th><th style="width:16%">Lot</th></tr></thead>
+            <tbody>
+              <tr><td>Red roses</td><td style="text-align:right">3,200</td><td>Jun 9</td><td>Jun 19</td><td>LOT-771</td></tr>
+              <tr><td>Eucalyptus</td><td style="text-align:right">400</td><td>Jun 7</td><td>Jun 17</td><td>LOT-758</td></tr>
+              <tr><td>White lilies</td><td style="text-align:right">0</td><td>—</td><td>—</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="screen" id="s-settings">
+      <div class="wrap">
+        <h1>Settings</h1><p class="sub">Demo settings placeholder.</p>
+        <div class="card" style="padding:18px;color:var(--muted);">Locations, work centers, labor rates, and barcode formats would be configured here.</div>
+      </div>
+    </section>
+
+    <div style="padding:14px 26px;color:var(--faint);font-size:12px;">Bouquet Builder — interactive POC demo for QuickFlora · sample data only</div>
+  </main>
+</div>
+
+<script>
+const IMG = id => `https://static.wixstatic.com/media/${id}/v1/fill/w_400,h_400,al_c,q_85,enc_auto/${id}`;
+const bouquets = [
+  ["SAP-006","Royal Hearts","Strike a Pose","45bd15_127d9c3f9f804393acf78e106f807ebb~mv2.jpg"],
+  ["SAP-004","Salsa Fiesta","Strike a Pose","45bd15_27d95b4f621c4ad0a22456203a0a7177~mv2.jpg"],
+  ["SAP-007","Everyday People","Strike a Pose","45bd15_68532229f0674a09a77e130195b7e937~mv2.jpg"],
+  ["SAP-002","Resting Witch Face","Strike a Pose","45bd15_680d680de5dc472bbb46b5c33bac6fce~mv2.jpg"],
+  ["SAP-009","Momma Dukes","Strike a Pose","45bd15_3dc8cf0cff4949bd9d3034008bdb60ed~mv2.jpg"],
+  ["SAP-005","Ho Ho Ho","Strike a Pose","45bd15_3341a33214d2460193b0507316867880~mv2.jpg"],
+  ["AME2109","Shades of Green Rose","Welcome Home","45bd15_d21c4797e07d4e09888e9cb26264975e~mv2.jpg"],
+  ["AME2057","Shades of Purple Mixed","Welcome Home","45bd15_6b9f4e61c0754f2caec6d3fec92ef8a4~mv2.jpg"],
+  ["AME2082","Shades of Yellow Mixed","Welcome Home","45bd15_04b2b27941d54b249e312cae3fada5fa~mv2.jpg"],
+  ["AME2107","Shades of Red Mixed","Welcome Home","45bd15_a1942462d7ca4ed6ab13005e3bc112ab~mv2.jpg"],
+  ["AME2045","Shades of Pink Rose","Welcome Home","45bd15_0f9df778283d433890c7b8542e751392~mv2.jpg"],
+  ["AME2078","Shades of Green Fun Bunch","Welcome Home","45bd15_5f0f3298829b4b11b665ce0a4adc95c2~mv2.jpg"],
+];
+const orders = [
+  ["BQ-4471","Royal Hearts",500,"Jun 18","Bloom & Co","To buy","p-warn",true],
+  ["BQ-4468","Shades of Purple Mixed",240,"Jun 16","Petal Pushers","Building","p-info",false],
+  ["BQ-4465","Salsa Fiesta",120,"Jun 15","FloraMart","Building","p-info",false],
+  ["BQ-4460","Shades of Green Rose",300,"Jun 14","Whole Foods","Ready","p-ok",false],
+  ["BQ-4455","Everyday People",60,"Jun 13","Local studio","Ready","p-ok",false],
+  ["BQ-4452","Everyday People",80,"Jun 13","Kroger","Delivered","p-mut",false],
+];
+const orderRows = document.getElementById('orderRows');
+orders.forEach(o=>{
+  const tr=document.createElement('tr');
+  if(o[7]){tr.className='click';tr.addEventListener('click',()=>go('detail'));}
+  tr.innerHTML=`<td style="font-weight:500">${o[0]}</td><td>${o[1]}</td><td style="text-align:right">${o[2]}</td><td>${o[3]}</td><td style="color:var(--muted)">${o[4]}</td><td><span class="pill ${o[6]}">${o[5]}</span></td>`;
+  orderRows.appendChild(tr);
+});
+const grid=document.getElementById('catalogGrid');
+bouquets.forEach(b=>{
+  const f=document.createElement('figure');
+  f.innerHTML=`<img loading="lazy" src="${IMG(b[3])}" alt="${b[1]}"><figcap><b>${b[1]}</b><span>${b[0]} · ${b[2]}</span></figcap>`;
+  grid.appendChild(f);
+});
+const titles={dashboard:"Dashboard",orders:"Orders",detail:"Order BQ-4471",buy:"Buy lists",receiving:"Receiving",production:"Production",pack:"Pack & ship",deliveries:"Deliveries",catalog:"Catalog & recipes",inventory:"Inventory",settings:"Settings"};
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('on');
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.go===id));
+  document.getElementById('crumb').textContent=titles[id]||'';
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
+</script>
+</body>
+</html>
