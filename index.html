@@ -223,6 +223,7 @@ const PERF=[['Roses',16.37,40299.60],['Carnations',18.47,45455.30],['Calla Lilli
 const VARS=['Roses','Carnations','Calla Lillies','Poms','Daisys','Sunflowers'];
 const MIXDATES=['Dec 15','Dec 17','Dec 19','Dec 21'];
 let dashInit=false;
+function ensureChart(cb){if(window.Chart)return cb();const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';s.onload=cb;document.head.appendChild(s);}
 function buildDash(){
  new Chart(agingChart,{type:'bar',data:{labels:AGE_LBL,datasets:[{data:AGE_VAL,backgroundColor:'#2E5E3A',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+(v/1000)+'k'}}}}});
  new Chart(boxChart,{type:'doughnut',data:{labels:BOXP.map(x=>x[0]),datasets:[{data:BOXP.map(x=>x[1]),backgroundColor:PAL,borderWidth:1,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{boxWidth:11,font:{size:11}}}}}});
@@ -295,7 +296,7 @@ function saveRecipe(){const e=editState;
 function deleteRecipe(sku){if(!confirm('Delete this recipe?'))return;if(STORE.added[sku])delete STORE.added[sku];else{delete STORE.edited[sku];if(!STORE.deleted.includes(sku))STORE.deleted.push(sku);}saveStore();applyStore();renderTabs();renderGrid();go('catalog');toast('Recipe deleted');}
 
 const titles={dashboard:"Dashboard",orders:"Orders",buy:"Buy lists",receiving:"Receiving",production:"Production",pack:"Pack & ship",deliveries:"Deliveries",catalog:"Catalog & recipes",inventory:"Inventory status",settings:"Settings",recipe:"Recipe"};
-function go(id,keepNav){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById('s-'+id).classList.add('on');if(!keepNav){document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.go===id));document.getElementById('crumb').innerHTML='<b>'+(titles[id]||'')+'</b>';}if(id==='dashboard'&&!dashInit&&window.Chart)buildDash();window.scrollTo(0,0);}
+function go(id,keepNav){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById('s-'+id).classList.add('on');if(!keepNav){document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.go===id));document.getElementById('crumb').innerHTML='<b>'+(titles[id]||'')+'</b>';}if(id==='dashboard'&&!dashInit)ensureChart(buildDash);window.scrollTo(0,0);}
 document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
 renderTabs();renderGrid();renderInv();
 </script></body></html>
